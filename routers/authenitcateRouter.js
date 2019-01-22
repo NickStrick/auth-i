@@ -1,5 +1,4 @@
 const express = require('express');
-const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
 const router = express.Router();
@@ -7,11 +6,8 @@ const router = express.Router();
 module.exports = router;
 
 const db = require('../database/db.js');
+const protected = require('../middleware/customMiddlewar.js');
 
-router.get('/',(req, res) => {
-    console.log(req.session);
-    res.send(`oi ${req.session.name}`)
-})
 
 router.post('/register', (req, res) => {
     const creds = req.body;
@@ -28,40 +24,35 @@ router.post('/register', (req, res) => {
 router.post('/login', (req, res) => {
     const creds = req.body;
 
-    db('users').where({ username: creds.username }).first().then(user => {
-        if(user && bcrypt.compareSync(creds.password, user.password)){
-            req.session.userId = user.id;
-            req.session.name = user.username;
-            console.log(req.session)
-            console.log(req.session.userId)
-            console.log(req.session.name)
-            res.status(200).json({msg:req.session.name});
-        }else{
-            res.status(401).json({msg: 'you shall not pass!'});
-        }
-    })
-    .catch(err => res.json(err))
+	db('users').where({username: creds.username }).first()
+	.then(user => {
+		if(user && bcrypt.compareSync(creds.password, user.password)) {
+			req.session.user = user;
+			res.status(200).json({msg: `welcome ${user.username}`});
+		}else{
+			res.status(401).json({you: 'shall not pass'})
+		}
+	})
 })
 
 router.get('/logout', (req, res) => {
-    if(req.session) {
-        req.session.destroy( err => {
-            if(err) {
-                res.send('error logging out');
-            }else{
-                res.send('good bye');
-            }
-        })
-    }
+    if(req.session && req.session.user) {
+		req.session.destroy(err => {
+			if(err){
+				res.status(500).json({err, msg: 'you cant leave'})
+			}else{
+				res.status(200).send('bye bye')
+			}
+		});
+	}else{
+		res.json({msg: 'not logged in'})
+	}
 })
 
 
-router.get('/users', (req, res) => {
-    db('users')
-    .select('id', 'username', 'password')
-    .then( users => {
-        res.json(users);
-    })
-    .catch(err => res.send(err));
+router.get('/users', protected, async (req, res) => {
+    const users = await db('users');
+
+	res.status(200).json(users);
 })
 

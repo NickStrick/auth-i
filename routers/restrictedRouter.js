@@ -1,13 +1,12 @@
 const express = require('express');
 
-
 const router = express.Router();
-const middleWare = require('../middleware/customMiddlewar.js');
+const protected = require('../middleware/customMiddlewar.js');
 
 module.exports = router;
 
 const db = require('../database/db.js');
 
-router.get('/',(req, res) => {
-    res.send(`oi ${req.session.name}`)
+router.get('/', protected, (req, res) => {
+    res.send('Take no thought for the morrow. For the morrow shall take thought for the things of itself')
 })
