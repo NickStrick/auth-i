@@ -7,6 +7,7 @@ const authenticateRouter = require('./routers/authenitcateRouter.js');
 const restrictedRoute = require('./routers/restrictedRouter.js');
 
 const server = express();
+const protected = require('./middleware/customMiddlewar.js');
 
 const sessionConfig = 
     {
@@ -26,7 +27,7 @@ server.use(morgan('short'));
 server.use(express.json());
 server.use(session(sessionConfig));
 
-server.use('/api/restricted', restrictedRoute);
+server.use('/api/restricted', protected, restrictedRoute);
 server.use('/api', authenticateRouter);
 
 server.listen(6000, () => console.log('server up on 6000'));
